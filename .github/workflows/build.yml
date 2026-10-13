@@ -7,19 +7,28 @@ on:
 jobs:
   build:
     runs-on: macos-14
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install Theos
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
+          set -eux
           brew install ldid
-          git clone --recursive --depth 1 https://github.com/theos/theos.git $HOME/theos
-          git clone --depth 1 https://github.com/theos/sdks.git $HOME/theos/sdks
-          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
-          echo "$HOME/theos/bin" >> $GITHUB_PATH
+          export THEOS="$HOME/theos"
+          git clone https://github.com/theos/theos.git "$THEOS"
+          git -C "$THEOS" submodule update --init --recursive
+          git clone --depth 1 https://github.com/theos/sdks.git "$THEOS/sdks"
+          echo "THEOS=$THEOS" >> "$GITHUB_ENV"
+          echo "$THEOS/bin" >> "$GITHUB_PATH"
 
       - name: Build
-        run: make
+        run: |
+          set -eux
+          make
 
       - name: Upload dylib
         uses: actions/upload-artifact@v4
