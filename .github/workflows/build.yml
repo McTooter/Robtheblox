@@ -1,0 +1,29 @@
+name: build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Theos
+        run: |
+          brew install ldid
+          git clone --recursive --depth 1 https://github.com/theos/theos.git $HOME/theos
+          git clone --depth 1 https://github.com/theos/sdks.git $HOME/theos/sdks
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+          echo "$HOME/theos/bin" >> $GITHUB_PATH
+
+      - name: Build
+        run: make
+
+      - name: Upload dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: RobloxExec
+          path: .theos/obj/**/*.dylib
+          if-no-files-found: error
